@@ -4,319 +4,363 @@
 
 ### *Your universe, one hub.*
 
-**A single, multi-game hub that launches packed, obfuscated builds — automatically matched to the game you're actually in.**
+One loader. Five games. Each one picks up the right script the moment you join.
 
 [![Version](https://img.shields.io/badge/version-1.1.0-84c6ff?style=flat-square)](./polaris.lua)
-[![Games](https://img.shields.io/badge/supported%20games-5-2dd4bf?style=flat-square)](#supported-games)
+[![Games](https://img.shields.io/badge/supported%20games-5-2dd4bf?style=flat-square)](#-supported-games)
 [![Language](https://img.shields.io/badge/Luau-Roblox-ff4530?style=flat-square)](https://luau-lang.org/)
-[![Builds](https://img.shields.io/badge/builds-packed%20%2F%20obfuscated-9b8cff?style=flat-square)](#how-it-works)
+[![Builds](https://img.shields.io/badge/builds-packed%20%2F%20obfuscated-9b8cff?style=flat-square)](#-how-it-works)
 
 </div>
 
 ---
 
-## ⚡ Quick Start
+## ⚡ Quick start
 
-Run **this one line** in your executor while you're in any supported game:
+Join any supported game, paste this into your executor, and run it:
 
 ```lua
 loadstring(game:HttpGet("https://cdn.luaprotect.dev/u/a80b01/66uTTgVKTlnS7drv"))()
 ```
 
-That's it. The hub detects the current game by **PlaceId** and shows you the right cards — join the correct game first, or use **Join Game** on a card to teleport there.
+That's the whole setup. Polaris reads your **PlaceId**, works out which game you're in, and shows the matching card. Not in the right game yet? Hit **Join Game** on a card and it'll teleport you there.
 
-> **Loader chain:** the CDN asset above loads the packed hub from this repo:
-> ```lua
-> loadstring(game:HttpGet("https://raw.githubusercontent.com/fervidos/PolarisHub/main/build/polaris.lua", true))()
-> ```
-> So your executor needs HTTP access to **both** `cdn.luaprotect.dev` (entry point) **and** `raw.githubusercontent.com` (hub + every game build). Whitelist both if your executor blocks unknown domains.
->
-> **Hub toggle:** `RightControl` — minimize / restore the hub.
-> The hub auto-closes shortly after a successful launch (the game script takes the screen). Re-execute the loader to bring it back.
-
----
-
-## 📑 Contents
-
-- [How It Works](#how-it-works)
-- [Supported Games](#supported-games)
-- [The Hub](#the-hub-hub-features)
-- [🎮 Game Modules](#-game-modules)
-  - [Roblox Stock Exchange 2 — Quantum Trader](#1--roblox-stock-exchange-2--quantum-trader-v200)
-  - [Sell a Million Sushi — Empire Commander](#2--sell-a-million-sushi--empire-commander)
-  - [Steal a Forest — Anti-AFK](#3--steal-a-forest--anti-afk-v220)
-  - [Cold War — Combat Suite](#4--cold-war--combat-suite)
-  - [Scam With Your Friends — KolkataFarmer](#5--scam-with-your-friends--kolkatafarmer-v8)
-- [Controls at a Glance](#controls-at-a-glance)
-- [Cinematic Startup](#cinematic-startup)
-- [Troubleshooting](#troubleshooting)
-- [Developer Notes](#developer-notes)
-
----
-
-## How It Works
-
-The hub (`polaris.lua`) contains **zero game logic**. Every **Launch** fetches a **packed, obfuscated build** from this repo's `build/` directory over HTTP and runs it. Plain sources under `Games/` and `Assets/` are **never published** (see `.gitignore`).
-
-| Layer | Role |
+| Key | What it does |
 | --- | --- |
-| **Hub** | Window, sidebar, game cards, detection, settings. Never runs game code itself. |
-| **Packed builds** (`build/*.lua`) | The real scripts — obfuscated, integrity-stamped, fetched on demand. |
-| **Marker check** | Each build begins with `POLARIS <name> build <digest> - packed build.` + the game's marker. The hub verifies both before compiling, so a GitHub 404 page can never be executed by mistake. |
-| **Cinematic startup** | Every build embeds the **POLARIS cinematic intro** (starfield → Polaris star → orbits → loader). It plays as an opaque overlay on top of the game load — **click / tap to skip**. Progress is *real* (game loaded, player/camera, character), never padded with artificial waits. If the intro ever fails, the game underneath still starts. |
+| `RightControl` | Minimize / restore the hub |
+| Click / tap on an intro | Skip the cinematic startup |
 
-**Why one hub?** One loader, one UI to learn, one version to track. When a game updates, only its packed build is repacked — the hub just fetches the fresh file on next launch.
+> **Heads up:** the hub closes itself shortly after a successful launch, since the game script takes over the screen. Run the loader again whenever you want it back.
 
 ---
 
-## Supported Games
+## 🧭 Jump to
 
-| # | Game | PlaceId | Packed build | Module |
-| --- | --- | --- | --- | --- |
-| 01 | **Roblox Stock Exchange 2** | `110527353762049` | `build/roblox_stock_exchange_2.lua` | Quantum Trader v2.0.0 |
-| 02 | **Sell a Million Sushi** | `125866884667103` | `build/sell_million_sushi.lua` | Empire Commander |
-| 03 | **Steal a Forest** | `140149493280576` | `build/steal_a_forest.lua` | Anti-AFK v2.2.0 |
-| 04 | **Cold War** | `13687899540` | `build/coldwar.lua` (+ `build/ui-template.lua`, fetched by itself) | Combat Suite |
-| 05 | **Scam With Your Friends** | `133878278486520` | `build/scam_with_your_friends.lua` | KolkataFarmer v8 |
-
-> Wrong game? The hub won't run the wrong build — it offers **Join Game** (teleports you to the exact PlaceId) instead.
+[How it works](#-how-it-works) · [Supported games](#-supported-games) · [The hub](#-the-hub) · [Game modules](#-game-modules) · [Controls](#-controls-at-a-glance) · [Startup animation](#-cinematic-startup) · [Troubleshooting](#-troubleshooting) · [For developers](#-for-developers)
 
 ---
 
-## The Hub
+## 🔭 How it works
 
-*A polished, dark-glass interface with an animated Polaris star, drifting particle field, and four accent colors — built entirely from code, no image assets required.*
+The hub (`polaris.lua`) holds **no game logic at all**. When you press **Launch**, it downloads a packed, obfuscated build from this repo's `build/` folder and runs it. The readable sources never leave my machine.
+
+| Piece | What it does |
+| --- | --- |
+| **Hub** | The window, sidebar, game cards, detection and settings. It never runs game code itself. |
+| **Packed builds** (`build/*.lua`) | The real scripts. Obfuscated, integrity-stamped, and fetched only when you ask for them. |
+| **Marker check** | Every build starts with a header (`POLARIS <name> build <digest> - packed build.`) plus a game marker. The hub checks both before compiling, so a GitHub 404 page can never be run by accident. |
+| **Cinematic startup** | Each build plays the POLARIS intro as an overlay while the game loads. Progress is real (game loaded, player, camera, character), never padded with fake waits. If the intro fails, the game underneath still starts. |
+
+**Why one hub?** One loader, one interface to learn, one version to keep track of. When a game updates, only its build gets repacked, and the hub grabs the fresh file the next time you launch.
+
+---
+
+## 🎯 Supported games
+
+| # | Game | PlaceId | Module |
+| :-: | --- | --- | --- |
+| 01 | **Roblox Stock Exchange 2** | `110527353762049` | Quantum Trader v2.0.0 |
+| 02 | **Sell a Million Sushi** | `125866884667103` | Empire Commander |
+| 03 | **Steal a Forest** | `140149493280576` | Anti-AFK v2.2.0 |
+| 04 | **Cold War** | `13687899540` | Combat Suite |
+| 05 | **Scam With Your Friends** | `133878278486520` | KolkataFarmer v8 |
+
+> **Wrong game?** Polaris won't run the wrong build. It offers **Join Game** instead and sends you to the exact PlaceId.
+
+<details>
+<summary>Build file paths</summary>
+
+| Game | Packed build |
+| --- | --- |
+| Roblox Stock Exchange 2 | `build/roblox_stock_exchange_2.lua` |
+| Sell a Million Sushi | `build/sell_million_sushi.lua` |
+| Steal a Forest | `build/steal_a_forest.lua` |
+| Cold War | `build/coldwar.lua` (it fetches `build/ui-template.lua` on its own) |
+| Scam With Your Friends | `build/scam_with_your_friends.lua` |
+
+</details>
+
+---
+
+## 🖥️ The hub
+
+A dark-glass interface with an animated Polaris star, a drifting particle field and four accent colors. It's built entirely in code, so there are no image assets to load.
 
 ### Pages
 
-- **Home** — game cards (thumbnail, index badge `01`–`05`, PlaceId) with a primary **Launch** button. Clicking a card opens its detail page.
-- **Games** — full list with live status: `Detected: you are in this game` highlighted in your accent when you stand in that PlaceId.
-- **Game detail** — big thumbnail, name, PlaceId, store URL, detection status, and a contextual **Launch** / **Join Game** button + the remote build path.
-- **Settings** — UI scale, accent color, animations, reduced motion, minimize / reset / close.
-- **Information** — version, developer, supported-game count, and description.
+- **Home:** game cards with a thumbnail, an index badge (`01`–`05`), the PlaceId and a **Launch** button. Click a card to open its detail page.
+- **Games:** the full list with live status. The game you're standing in lights up with *"Detected: you are in this game"*.
+- **Game detail:** a large thumbnail, name, PlaceId, store link, detection status, the remote build path, and a **Launch** or **Join Game** button depending on where you are.
+- **Settings:** UI scale, accent color, animations, reduced motion, and minimize / reset / close.
+- **Information:** version, developer, supported-game count and a short description.
 
-### Hub Settings
+### Settings
 
 | Setting | Options | Notes |
 | --- | --- | --- |
-| **UI scale** | `70%` – `130%` in `10%` steps | Auto-fits to viewport; header drag stays accurate at any scale. |
-| **Accent color** | **Ice** `84C6FF` · **Silver** `CCD4E2` · **Aurora** `7AE2CE` · **Violet** `AE9AFF` | Re-colors indicators, badges, toggles, and focused borders instantly. |
-| **Animations** | On / Off | Off makes tweens instant. |
-| **Reduced motion** | On / Off | Short fades, no particle drift. |
-| **Minimize** | `RightControl`, `-` button, or Settings | Collapses to a floating star **dock** — click it to restore. |
+| **UI scale** | `70%` to `130%` in `10%` steps | Fits itself to your viewport, and dragging the header stays accurate at any scale. |
+| **Accent color** | **Ice** `84C6FF` · **Silver** `CCD4E2` · **Aurora** `7AE2CE` · **Violet** `AE9AFF` | Recolors indicators, badges, toggles and focused borders instantly. |
+| **Animations** | On / Off | Off makes every tween instant. |
+| **Reduced motion** | On / Off | Short fades and no particle drift. |
+| **Minimize** | `RightControl`, the `-` button, or Settings | Collapses to a small floating star. Click it to restore. |
 
-Small details: draggable topbar, toast notifications, staggered card entrances, rounded cards with accent glow-stroke on hover, and `getgenv().POLARIS_HUB.Destroy()` singleton cleanup so re-executing never stacks two hubs.
-
----
-<a id="game-modules"></a>
-
-## 🎮 Game Modules
-
-Every module below opens with the **POLARIS cinematic startup**. Click / tap the intro to skip it.
+A few small touches: a draggable top bar, toast notifications, staggered card entrances, and an accent glow on card hover. Re-running the loader never stacks a second hub, because `getgenv().POLARIS_HUB.Destroy()` cleans up the old one first.
 
 ---
 
-### 1 — Roblox Stock Exchange 2 · Quantum Trader v2.0.0
+## 🎮 Game modules
 
-> *Predictive price engine + leveraged auto-trader + autofarm + empire automation.*
+Every module opens with the POLARIS cinematic startup, and you can click or tap to skip it. Open a game below for the details.
+
+<details>
+<summary><b>01 · Roblox Stock Exchange 2 — Quantum Trader v2.0.0</b></summary>
+
+<br>
+
+> *A predictive price engine, a leveraged auto-trader, autofarm and empire automation, all in one.*
 > PlaceId `110527353762049` · Menu `RightShift` · Panic `Delete`
 
-**The edge:** the exchange generates every candle from its profile seed, and its own `Shared.PriceEngine` is readable. Quantum Trader computes **future prices exactly** instead of guessing at charts, scans **every listed stock, crypto, ETF, forex pair, future, and index**, and ranks the best predicted move in the next few seconds.
+**The idea:** the exchange builds every candle from a profile seed, and its `Shared.PriceEngine` can be read. So Quantum Trader doesn't guess at charts. It calculates future prices exactly, scans every listed stock, crypto, ETF, forex pair, future and index, and ranks whichever has the best predicted move over the next few seconds.
 
 #### Auto Trade
 
-- **Strategies** — `Peak Sniper` · `Balanced` · `Momentum`, with asset filter `All / Crypto / Stocks / ETF / Forex / Futures / Index`.
-- **Leveraged entries** — leverage `1x`–`100x` (respecting server cap + level unlocks), margin-per-trade %, cash-reserve %, max positions `1`–`12`, max opens per scan.
-- **Exact exits** — take profit at the **predicted peak**, re-planned **every tick** (Peak Exit Planner); hard stop loss; reversal exit; max hold timer.
-- **Liquidation Guard** — every entry is vetted against a sampled worst-case path; trades whose worst path crosses the liquidation price are rejected.
-- **Dynamic Leverage** — automatically lowers leverage when predicted drawdown is larger. **Turbo Mode** scans faster and allows two entries per cycle. Optional exchange-side stop/target on every order.
-- **Live book** — Dashboard (level, max leverage, open positions, scan cycle), **Signals** tab (ranked predicted move), **Positions** tab (live positions), **Logs** tab.
+- **Strategies:** `Peak Sniper`, `Balanced` or `Momentum`, with an asset filter (`All / Crypto / Stocks / ETF / Forex / Futures / Index`).
+- **Leveraged entries:** `1x`–`100x` (within the server cap and your level unlocks), margin per trade %, cash reserve %, max positions `1`–`12`, and max opens per scan.
+- **Exact exits:** take profit at the predicted peak, re-planned every tick by the Peak Exit Planner. There's also a hard stop loss, a reversal exit and a max hold timer.
+- **Liquidation Guard:** every entry is tested against a sampled worst-case path, and any trade that would cross its liquidation price is rejected.
+- **Dynamic Leverage** lowers leverage automatically when the predicted drawdown is larger. **Turbo Mode** scans faster and allows two entries per cycle. Exchange-side stop and target orders are optional.
+- **Live book:** a Dashboard (level, max leverage, open positions, scan cycle), plus **Signals** (ranked predictions), **Positions** and **Logs** tabs.
 
-#### Empire Automation (v2.0)
+#### Empire automation (v2.0)
 
 | System | What it does |
 | --- | --- |
-| **Launchpad** | Launches your **own memecoins**, dev-buys, manages and exits the bag. Take profit + stop loss, exit-at-curve-fill %, max launches/session, plus **Meme Sniper** momentum trades on other players' coins (beta, off by default). |
-| **Company** | Incorporates a firm, answers company events with the best available choice, declares dividends, buys back stock below NAV, and optional **Founder Exit** (files notice + sells founder shares above target). Split via auto-capital % or fixed override. |
-| **Estate** | Collects rent, repairs storm damage, builds/upgrades every owned tile, snaps up cheapest neighbouring land, accepts strong offers (multiple threshold), sells idle tiles, cashes in founder land. |
-| **Finance** | **Vault sweep** (park excess cash, pull back when needed), **bond lending** into the best-yielding treasury tier, **Trader Pass** + **Retention** reward claims, and a sealed **Challenge Run** (DANGER — fresh-account path, off by default). |
+| **Launchpad** | Launches your own memecoins, dev-buys, and manages and exits the bag. Take profit, stop loss, exit-at-curve-fill %, and a max launches per session. Also includes **Meme Sniper** momentum trades on other players' coins (beta, off by default). |
+| **Company** | Incorporates a firm, answers company events with the best available choice, declares dividends, and buys back stock below NAV. Optional **Founder Exit** files notice and sells founder shares above a target. Capital split is automatic or a fixed override. |
+| **Estate** | Collects rent, repairs storm damage, builds and upgrades every owned tile, buys the cheapest neighboring land, accepts strong offers, sells idle tiles, and cashes in founder land. |
+| **Finance** | **Vault sweep** (park spare cash, pull it back when needed), **bond lending** into the best-yielding treasury tier, **Trader Pass** and **Retention** reward claims, and a sealed **Challenge Run** (DANGER: fresh-account path, off by default). |
 
 #### Autofarm
 
-Auto-claims daily desk objectives, career milestones, close-report payout, one-time favorite/group/like rewards; buys desk upgrades (commission, execution, margin, scanner tiers); backs predicted-pop IPOs; auto-rebirth when the book is flat; built-in **Anti-AFK**.
+Claims daily desk objectives, career milestones, the close-report payout and the one-time favorite / group / like rewards. It buys desk upgrades (commission, execution, margin, scanner tiers), backs IPOs predicted to pop, rebirths automatically when your book is flat, and has a built-in **Anti-AFK**.
 
-**Safety:** `Delete` = **panic close** — closes every position and stops the engine instantly. Settings persist to `RSE2_Quantum.json` (`writefile`/`readfile`). *All markets in the game are simulated — no real money involved.*
+#### Safety
 
----
+`Delete` is the **panic button**: it closes every position and stops the engine instantly. Settings are saved to `RSE2_Quantum.json` via `writefile` / `readfile`. All markets in this game are simulated, so no real money is involved.
 
-### 2 — Sell a Million Sushi · Empire Commander
+</details>
 
-> *All-in-one automation suite with a smooth, animated GUI. Free in-game mechanics only — no Robux purchases.*
+<details>
+<summary><b>02 · Sell a Million Sushi — Empire Commander</b></summary>
+
+<br>
+
+> *An all-in-one automation suite with a smooth animated GUI. Free in-game mechanics only, no Robux purchases.*
 > PlaceId `125866884667103` · GUI `RightShift` · Auto-Pilot `F8`
 
 #### Dashboard
 
-Live stats: **Status**, **Net Worth**, **Current Count**, **Fish Price** (`x` multiplier), counters for loot / deposits / buys / merges / upgrades — plus **Toggle Auto-Pilot** and **Teleport Home**.
+Live stats for **Status**, **Net Worth**, **Current Count** and **Fish Price** (with its `x` multiplier), plus counters for loot, deposits, buys, merges and upgrades. You also get **Toggle Auto-Pilot** and **Teleport Home**.
 
 #### Economy
 
-- **Auto Collect Loot** & **Auto Collect Money** — sweeps fish loot tiers and customer-money buttons via proximity-touch (with a teleport-touch fallback).
-- **Auto Deposit Fish** — deposits when the market price meets your threshold (+ **Smart Market Timing**).
-- **Auto Handle Chests** — picks up chests and routes them: **Auto Keep Rare** (keeps tiers at/above your rarity threshold) · **Auto Discard** (free discard, no Robux) · **Auto Unlock** (⚠️ Robux risk, your call).
-- **Auto Offline Income** & **Auto Group Reward** collectors.
+- **Auto Collect Loot** and **Auto Collect Money** sweep fish loot tiers and customer-money buttons using proximity-touch, with a teleport-touch fallback.
+- **Auto Deposit Fish** deposits when the market price meets your threshold, and works with **Smart Market Timing**.
+- **Auto Handle Chests** picks up chests and routes them: **Auto Keep Rare** (keeps tiers at or above your rarity threshold), **Auto Discard** (free, no Robux) and **Auto Unlock** (⚠️ costs Robux, so it's your call).
+- **Auto Offline Income** and **Auto Group Reward** collect those for you.
 
-#### Fishery (Production Scaling)
+#### Fishery
 
-**Auto Buy Fishermen** (bulk via the `100 / 25 / 5 / 1` buttons) · **Auto Merge Fishermen** · **Auto Upgrade Sell Speed** · **Auto Instant Sell** (with its own price threshold) · **Smart Market Timing** (only act on good prices).
+**Auto Buy Fishermen** (bulk, through the `100 / 25 / 5 / 1` buttons), **Auto Merge Fishermen**, **Auto Upgrade Sell Speed**, and **Auto Instant Sell** with its own price threshold. **Smart Market Timing** makes sure it only acts on good prices.
 
-#### Movement Exploits
+#### Movement
 
-Add those to checkpoint buttons and you have complete plot control:
-
-- **Fly** (`WASD` + `Space`/`Ctrl`, adjustable speed) · **Noclip** · **Infinite Jump** · **Speed Hack** (`16` → `100`)
-- **Teleport to Sell Area** / **Teleport to Deposit** one-clicks.
+**Fly** (`WASD` + `Space` / `Ctrl`, adjustable speed), **Noclip**, **Infinite Jump**, and **Speed Hack** (`16` up to `100`). There are one-click teleports to the **Sell Area** and the **Deposit** spot, so you can combine these with the checkpoint buttons for full control of your plot.
 
 #### Employees & Trader
 
-**Auto Enable Employees** (toggles every owned employee ON), **Auto Trader Threshold** pinned to max `1.5x`, plus one-click **Enable All Employees Now** / **Set Trader to Max**.
+**Auto Enable Employees** switches every owned employee on, and **Auto Trader Threshold** stays pinned at the max `1.5x`. You can also use the one-click **Enable All Employees Now** and **Set Trader to Max**.
 
-#### Master Control
+#### Master control
 
-**Master Auto-Pilot** + **Master Feature Gate** (global on/off), **Anti-AFK** (jittered heartbeat + brief key-hold, blocks the 20-minute idle kick), toast notifications, draggable/minimizable window with a reopen pill, and config persistence (`EmpireCommanderConfig.json`). Destroys cleanly via **Destroy Script**.
+**Master Auto-Pilot** and a **Master Feature Gate** (a global on/off), plus **Anti-AFK** (a jittered heartbeat and a brief key-hold that blocks the 20-minute idle kick). The window is draggable and minimizable with a reopen pill, shows toast notifications, saves its config to `EmpireCommanderConfig.json`, and shuts down cleanly with **Destroy Script**.
 
----
+</details>
 
-### 3 — Steal a Forest · Anti-AFK v2.2.0
+<details>
+<summary><b>03 · Steal a Forest — Anti-AFK v2.2.0</b></summary>
 
-> *Human-like, multi-vector anti-AFK that never leaves your base zone.*
+<br>
+
+> *A human-like, multi-vector anti-AFK that never pulls you out of your base zone.*
 > PlaceId `140149493280576` · Show / hide `RightShift`
 
-**Engine — independent pulses, all pcall-safe:**
+#### The engine
 
-- **VirtualUser** click (`ClickButton2`, modern `Vector2` form with legacy fallback)
-- **VirtualInputManager** key taps (`W A S D`, `+ Space` only when Jump is on — a true no-jump mode)
-- **Jump** (`Humanoid.Jump` + backup `Space` press; skipped in no-jump zones / when seated / airborne)
-- **Camera** yaw/pitch nudge · **Spin** yaw turn · **Micro-move** — a `1.0–2.2` stud micro-orbit that returns you to your pulse start
+Each of these fires as its own independent pulse, and all of them are `pcall`-safe:
 
-**Why it doesn't disturb your farm:** pulses are anchored to your **idle spot** (spawn / base / guards zone). Drift beyond `10` studs triggers a soft return; **Reset Anchor** forces a new anchor anywhere. Groundedness is verified via `FloorMaterial` before every move.
+- **VirtualUser** click (`ClickButton2`, using the modern `Vector2` form with a legacy fallback)
+- **VirtualInputManager** key taps (`W A S D`, plus `Space` only when Jump is on, so there's a true no-jump mode)
+- **Jump** (`Humanoid.Jump` with a backup `Space` press, skipped in no-jump zones, while seated or while airborne)
+- **Camera** yaw / pitch nudges
+- **Spin** yaw turns
+- **Micro-move:** a `1.0`–`2.2` stud micro-orbit that returns you to where the pulse started
 
-**Modes & cadence:**
+#### Why it won't disturb your farm
 
-| Mode | Character |
+Pulses are anchored to your idle spot (spawn, base or guards zone). If you drift more than `10` studs away, it gently walks you back, and **Reset Anchor** lets you set a new anchor anywhere. Before every move it checks you're actually on the ground using `FloorMaterial`.
+
+#### Modes & cadence
+
+| Mode | Feel |
 | --- | --- |
 | **Safe** | Sparse, minimal pulses |
 | **Balanced** *(default)* | Even cadence with human jitter |
 | **Aggressive** | Dense pulses for maximum safety |
 
-Interval slider `15s`–`120s` (default `45s`) with `0.85x`–`1.15x` human-like jitter, **manual-activity reset** (your own input postpones the next pulse), and an **`Idled` emergency fallback**.
+The interval slider runs from `15s` to `120s` (default `45s`) with `0.85x`–`1.15x` human-style jitter. If you move or type yourself, the next pulse gets postponed, and there's an `Idled` emergency fallback as a last line of defense.
 
-**GUI:** modern dark-glass window, draggable, animated show/hide, **live countdown**, **pulse log**, per-method chips (`Keys · Jump · Camera · Spin · VU · Move`), a mini-pill when hidden, and persistence (`Polaris_StealForest_AntiAFK.json`). No custom AFK RemoteEvent exists in this game (all 142 remotes scanned) — the genuine 20-minute idle detector is beaten, not bypassed.
+#### GUI
 
----
+A dark-glass, draggable window with animated show / hide, a **live countdown**, a **pulse log**, per-method chips (`Keys · Jump · Camera · Spin · VU · Move`), a mini-pill when hidden, and saved settings (`Polaris_StealForest_AntiAFK.json`).
 
-### 4 — Cold War · Combat Suite
+The game has no custom AFK RemoteEvent (all 142 remotes were scanned), so what this beats is the real 20-minute idle detector.
 
-> *80-player NATO-vs-PACT shooter with real ballistics. Silent aim is a **bent shot**, not a claimed one — the direction is rewritten **before** the client encodes it, so the server's copy and the client's copy are the same genuine trajectory.*
+</details>
+
+<details>
+<summary><b>04 · Cold War — Combat Suite</b></summary>
+
+<br>
+
+> *An 80-player NATO vs PACT shooter with real ballistics. The silent aim here is a genuine bent shot: the direction is rewritten before the client encodes it, so the server and the client both see the same real trajectory.*
 > PlaceId `13687899540` · Panel `RightShift` · Panic `F1`–`F4` (configurable)
 
-Ballistics are **solved exactly** using the game's own maths: `pos(t) = origin + dir·V/K·(1−e^(−Kt)) − up·g/2·t²`, with fixed-point flight-time iteration, lead prediction, and the arc **walked** with the bullet's own `RaycastParams` (team collision group included). A shot only bends when the first limb met is a limb of the target; a helmeted head (whose handle eats the claim) falls back to the torso. Bends of `0.1°`–`7.2°` were **measured registered** against real server limb health — the default `7°` FOV sits inside proven range. No `hookfunction`, no `hookmetamethod`: the volley lookup is swapped via a plain table-field swap. **Anticheat note:** the game never resizes a part, never adds a BodyMover, and the panel lives in `gethui()` — at identity 2 the `CoreGui` image scan resolves to `nil`, so it never reaches the panel. ESP is `Drawing` objects, not Instances.
+#### How the aim works
+
+Ballistics are solved exactly with the game's own maths:
+
+`pos(t) = origin + dir·V/K·(1−e^(−Kt)) − up·g/2·t²`
+
+That includes fixed-point flight-time iteration and lead prediction. The arc is walked with the bullet's own `RaycastParams`, team collision group included. A shot only bends when the first limb it meets belongs to the target, and a helmeted head (whose handle eats the claim) falls back to the torso. Bends from `0.1°` to `7.2°` were measured as registered against real server limb health, so the default `7°` FOV sits inside the proven range.
+
+It uses no `hookfunction` and no `hookmetamethod`. The volley lookup is swapped with a plain table-field swap.
+
+#### Under the hood
+
+The game never resizes a part and never adds a BodyMover. The panel lives in `gethui()`, so at identity 2 the `CoreGui` image scan resolves to `nil` and never reaches it. ESP is made of `Drawing` objects rather than Instances.
 
 #### ESP
 
-Box · name · class (`Sniper` / `AT` / `Medic` …) · distance + weapon · health bar · head/torso numbers · status flags (`DOWNED` / `SPAWN` / `DISGUISED`) · **helmet marker + knocked flash** · skeleton · tracer · head dot · visible-only · dim-hidden · teammates (blue) · vehicles (+ empty) · max distance · text size · **bipod-mounted flag**.
+Box, name, class (`Sniper` / `AT` / `Medic` …), distance and weapon, health bar, head / torso numbers, status flags (`DOWNED` / `SPAWN` / `DISGUISED`), helmet marker and knocked flash, skeleton, tracer, head dot, visible-only, dim-hidden, teammates (blue), vehicles (and empty ones), max distance, text size, and a **bipod-mounted** flag.
 
-#### Camera Aimbot
+#### Camera aimbot
 
-Hitkey / Always / While-firing trigger · aim key · `Head` / `Torso` / `Nearest` · bullet-drop + lead prediction · sticky target · visible-only · FOV circle · smooth H/V · **humanisation** (reaction min/max, wind-up ramp, speed ceiling `°/s`).
+Hitkey, Always or While-firing triggers, plus an aim key. Targets `Head`, `Torso` or `Nearest`, with bullet-drop and lead prediction, sticky target, visible-only, a FOV circle, and smooth H/V. **Humanisation** covers reaction min / max, a wind-up ramp and a speed ceiling (`°/s`).
 
-#### Silent Aim (Bent Shot)
+#### Silent aim (bent shot)
 
-`Head` / `Torso` / `Nearest` / `Random` · FOV in degrees · hit chance % · **Sniper deadly** (always head, `1400m`) · max distance `800m` · lead moving targets · FOV circle. **Mounted-gun silent aim** for turrets (`M2HB` / `M60T` / `PKT` …) up to `1200m` with its own chance/FOV/lead tuning.
+Targets `Head`, `Torso`, `Nearest` or `Random`. Settings for FOV in degrees, hit chance %, **Sniper deadly** (always head, `1400m`), max distance `800m`, lead for moving targets and a FOV circle. **Mounted-gun silent aim** covers turrets (`M2HB` / `M60T` / `PKT` …) up to `1200m`, with its own chance, FOV and lead tuning.
 
-#### RADAR / Telemetry
+#### Radar & telemetry
 
-Rotating radar (range + size, position `Left / Right / Top left / Top right`) showing enemies, teammates, vehicles, turret direction, objectives, names, and sweep · threat list with nearest threat + distance · frontline scores · **launcher impact marker** (blast ring, crosshair, distance/arming label, flatten-to-ground).
+A rotating radar (range, size, and position at `Left / Right / Top left / Top right`) showing enemies, teammates, vehicles, turret direction, objectives, names and the sweep. Also a threat list with the nearest threat and its distance, frontline scores, and a **launcher impact marker** (blast ring, crosshair, distance / arming label, flatten-to-ground).
 
-#### INTEL
+#### Intel
 
-**Radio captions** — enemy callout subtitles + reloading flags · **HitCam armour x-ray** overlay · helmet-knocked sensor · **staff scan** (server staff list pre-warned).
+**Radio captions** (enemy callout subtitles and reloading flags), a **HitCam armour x-ray** overlay, a helmet-knocked sensor, and a **staff scan** that pre-warns you about the server's staff list.
 
-#### Bipod ([BIPODS] update)
+#### Bipod (the `[BIPODS]` update)
 
-**Flag bipod-mounted enemies**, **auto-deploy when ready** (calls the game's own `toggle()` — gated by the game's own ground scan, so it can never plant where the game wouldn't), deploy-key hint, and a live **mount status** readout backed by a local BlockCast probe (`normal ≥ 0.9397`).
+Flags bipod-mounted enemies and can **auto-deploy when ready**. It calls the game's own `toggle()`, which is gated by the game's own ground scan, so it can never plant somewhere the game wouldn't allow. It also shows a deploy-key hint and a live **mount status** readout backed by a local BlockCast probe (`normal ≥ 0.9397`).
 
 #### World
 
-No fog · fullbright · no suppression blur · team-aware enemy checks (`Player.Team` — the exact check `HitReporter` uses), per-limb health (`Head 50 · Torso 150 · limbs 100`), ragdoll-aware (`Ragdolled` attribute), and skip-downed / skip-spawn rules.
+No fog, fullbright and no suppression blur. Enemy checks are team-aware (`Player.Team`, the exact check `HitReporter` uses). It knows per-limb health (`Head 50 · Torso 150 · limbs 100`), is ragdoll-aware (`Ragdolled` attribute), and has skip-downed and skip-spawn rules.
+
+</details>
+
+<details>
+<summary><b>05 · Scam With Your Friends — KolkataFarmer v8</b></summary>
+
+<br>
+
+> *A full-blown farmer: persona calls, shop / gear / team max-out, a virus crew and a GUI.*
+> PlaceId `133878278486520` · GUI `RightShift` to hide · Stop with `_G.KF_STOP = true`
+
+KolkataFarmer v8 runs the whole office. It answers calls, works the full scam catalogue (merged live from `Catalog`, `DailyPlaybooks` and `PlaybookLadder`), and maxes out the shop, gear and team.
+
+#### Persona calls
+
+A **persona bank** of `50+` playbooks (`fake_card`, `romance`, `police-impersonation`, `pet_rock`, `dragon_sitter`, `moon_camping`, `lost_socks`, `yodel_echo`, `duck_knight`, `pizza_…` and plenty more), each with objective-specific lines templated on the caller's `NAME`.
+
+**Drill mode** builds lines from the game's own objective keyword tables. The 9 ladder playbooks carry no keywords, so those fall back to persona lines.
+
+The full call loop is answer → select → haggle → chat → claim → hang up. It reads the transcript on each call, detects junk replies (`junkGiveUp`), and has auto-hang and auto-fire controls.
+
+#### Shop, gear, team & virus crew
+
+- **SHOP (ROI):** buys the best-ROI unlockables as soon as you can afford them.
+- **TEAM:** hires and fills staff to the max.
+- **STYLE:** maxes out gear and style unlockables.
+- **Virus crew:** sends the **Fire Extinguisher** crew to the nearest fire stands.
+- **2× Boost:** buys a spare commission charge and uses it on valuable calls (aggressive mode, minimum-value threshold), with stock and reserve tuning.
+
+On top of that: delay-tuned **auto-rebirth**, day-card dismissal, the desk computer and camera-app policy toggles, and per-call state pruning so multi-hour sessions stay lean.
+
+#### Anti-AFK & ops
+
+The anti-AFK loop runs on its own thread and is deliberately **not** gated on `KF_STOP`, because parking at a desk is exactly when you want to stay connected. It uses jittered camera writes.
+
+You get live stats (`answers / selects / chats / claims / haggles / fires / buys / boosts / gear / style / rebirths / afk`), a rolling log, and these controller flags: `_G.KF_STOP`, `_G.KF_AFK_STOP`, `_G.KF.stats`, `_G.KF.log`, `_G.KF.afk`.
+
+#### GUI (`KFGUI`)
+
+CONTROL, AUTOMATION and TUNING sections with toggles for `SHOP · TEAM · STYLE · 2X BOOST · PERSONA · HAGGLE · FIRE · BOOST BUY · REBIRTH · ANTI-AFK`. It also has steppers for AFK interval, speed and max sends, a persona-select mode, a boost-aggressive switch, a variant selector, and `PAUSE / RESUME / STOP`.
+
+</details>
 
 ---
 
-### 5 — Scam With Your Friends · KolkataFarmer v8
-
-> *Full-pledged farmer: persona calls, shop/gear/team max-out, virus crew, GUI.*
-> PlaceId `133878278486520` · GUI `RightShift` to hide · Stop `_G.KF_STOP = true`
-
-KolkataFarmer v8 is a complete office operator. It answers calls, works the full scam catalogue (merged live from `Catalog` + `DailyPlaybooks` + `PlaybookLadder`), and maxes the shop, gear, and team.
-
-#### Persona Calls
-
-A **persona bank** of `50+` playbooks (`fake_card`, `romance`, `police-impersonation`, `pet_rock`, `dragon_sitter`, `moon_camping`, `lost_socks`, `yodel_echo`, `duck_knight`, `pizza_…` and many more), each with objective-specific lines templated on the caller's `NAME`. A **drill mode** builds lines from the game's own objective keyword tables (the 9 ladder playbooks carry no keywords, so they fall back to persona lines). Full call loop: answer → select → haggle → chat → claim → hang up, with transcripts read per call, junk-reply detection (`junkGiveUp`), and auto-hang / auto-fire controls.
-
-#### Shop / Gear / Team / Virus Crew
-
-- **SHOP (ROI)** — buys the best-ROI unlockables when you can afford them.
-- **TEAM** — hires and fills staff to max.
-- **STYLE** — gear + style unlockables to max-out.
-- **Virus crew** — dispatches the **Fire Extinguisher** crew to the nearest fire stands.
-- **2× Boost** — auto-buys a spare commission charge and auto-uses it on valuable calls (aggressive mode, minimum-value threshold), with stock/reserve tuning.
-
-Plus: **auto-rebirth** (delay-tuned), day-card dismissal, the desk computer/camera-app policy toggles, and per-call state pruning so multi-hour sessions stay lean.
-
-#### Anti-AFK & Ops
-
-The anti-AFK loop runs on its **own thread — deliberately not gated on `KF_STOP`** (parking at a desk is exactly when you want to stay connected), with jittered camera writes. Live stats (`answers / selects / chats / claims / haggles / fires / buys / boosts / gear / style / rebirths / afk`), a rolling log, and controller flags: `_G.KF_STOP`, `_G.KF_AFK_STOP`, `_G.KF.stats`, `_G.KF.log`, `_G.KF.afk`.
-
-**GUI (`KFGUI`):** CONTROL / AUTOMATION / TUNING sections with `SHOP · TEAM · STYLE · 2X BOOST · PERSONA · HAGGLE · FIRE · BOOST BUY · REBIRTH · ANTI-AFK` toggles, AFK-interval + speed + max-sends steppers, persona-select mode, boost-aggressive switch, variant selector, and `PAUSE / RESUME / STOP`.
-
----
-
-## Controls at a Glance
+## ⌨️ Controls at a glance
 
 | Context | Control | Action |
 | --- | --- | --- |
-| **Hub** | `RightControl` | Minimize / restore hub |
+| **Hub** | `RightControl` | Minimize / restore |
 | **RSE2** | `RightShift` · `Delete` | Menu · **Panic close everything** |
 | **Sushi** | `RightShift` · `F8` | Toggle GUI · Toggle Auto-Pilot |
-| **Steal a Forest** | `RightShift` | Show / hide Anti-AFK GUI |
+| **Steal a Forest** | `RightShift` | Show / hide the Anti-AFK GUI |
 | **Cold War** | `RightShift` · `F1`–`F4` | Panel · Panic key (changeable) |
 | **KolkataFarmer** | `RightShift` | Hide / show GUI |
-| **Any intro** | Click / tap | Skip cinematic startup |
+| **Any intro** | Click / tap | Skip the cinematic startup |
 
 ---
 
-## Cinematic Startup
+## 🌌 Cinematic startup
 
-Embedded in every packed build (source: `Assets/startup_animation.lua`):
+Every packed build opens with it (source: `Assets/startup_animation.lua`):
 
-- A `150`-star field, twinkling dust, and nebula glow with a slowly rotating sky, spiralling gather particles, and three orbiting light trails around the four-pointed **Polaris star**
-- Per-letter typography with a light-sweep reveal, plus celestial-chart captions (`URSAE MINORIS` / `DEC +89° 15'`)
-- A real progress loader driven by actual init tasks — **click / tap anywhere to skip** to the finale, and any failure is contained so the game below **always** loads
-
----
-
-## Troubleshooting
-
-- **"could not download build"** — the executor's HTTP is blocked or `raw.githubusercontent.com` isn't whitelisted. Allow **both** `cdn.luaprotect.dev` and `raw.githubusercontent.com` and relaunch — the CDN loader hands off to GitHub for the hub, and GitHub also serves every game build.
-- **"not a packed build"** — the branch was pushed without `build/`, or a cache served a stale file. Wait ~5 minutes for raw CDN expiry or re-push `build/`.
-- **Wrong game** — join the exact PlaceId from the table first. The hub will offer **Join Game** instead of running the wrong build.
-- **Hub doesn't appear / double hub** — re-execute the loader. The hub destroys any previous instance (`POLARIS_HUB.Destroy`) on boot.
-- **A game GUI doesn't open** — check the per-game key in [Controls at a Glance](#controls-at-a-glance) (most are `RightShift`).
+- A `150`-star field, twinkling dust and a nebula glow, with a slowly rotating sky, spiralling gather particles and three orbiting light trails around the four-pointed **Polaris star**.
+- Per-letter typography with a light-sweep reveal, plus celestial-chart captions (`URSAE MINORIS` / `DEC +89° 15'`).
+- A real progress loader driven by actual init tasks. Click or tap anywhere to jump to the finale. Any failure is contained, so the game underneath **always** loads.
 
 ---
 
-## Developer Notes
+## 🛠️ Troubleshooting
 
-Plain sources, the intro, and the build tooling live locally and are **not published** (see `.gitignore`). The repo only ever carries the packed outputs. To publish a new version, run your private builder locally, add only the public artifacts, and push:
+| Problem | Fix |
+| --- | --- |
+| **"could not download build"** | Your executor's HTTP is blocked, or `raw.githubusercontent.com` isn't whitelisted. Allow **both** `cdn.luaprotect.dev` and `raw.githubusercontent.com`, then relaunch. The CDN loader hands off to GitHub for the hub, and GitHub also serves every game build. |
+| **"not a packed build"** | The branch was pushed without `build/`, or a cache served a stale file. Wait about 5 minutes for the raw CDN to expire, or re-push `build/`. |
+| **Wrong game** | Join the exact PlaceId from the table first. The hub will offer **Join Game** rather than run the wrong build. |
+| **Hub missing or doubled** | Re-run the loader. The hub destroys any previous instance (`POLARIS_HUB.Destroy`) on boot. |
+| **A game GUI won't open** | Check the key in [Controls at a glance](#-controls-at-a-glance). Most are `RightShift`. |
+
+---
+
+## 👩‍💻 For developers
+
+The plain sources, the intro and the build tooling all live locally and are **not published** (see `.gitignore`). The repo only ever carries packed output. To ship a new version, run your private builder, add only the public files, and push:
 
 ```sh
 git add .gitignore README.md build/
@@ -324,15 +368,15 @@ git commit -m "publish packed builds"
 git push origin main
 ```
 
-`Games/`, `Assets/` and `Obfuscator/` are git-ignored, so `git add .` is also safe — it will never stage them.
+`Games/`, `Assets/` and `Obfuscator/` are git-ignored, so `git add .` is safe too. It will never stage them.
 
 ```
 Polaris Hub/
-├── polaris.lua        # hub source (local only — published as build/polaris.lua)
+├── polaris.lua        # hub source (local only, published as build/polaris.lua)
 ├── Games/             # private plain sources (git-ignored)
 ├── Assets/            # private cinematic startup source (git-ignored)
 ├── Obfuscator/        # private build tooling (git-ignored)
-└── build/             # ← the ONLY published code: packed builds (hub + 5 games + ui-template)
+└── build/             # the ONLY published code: hub + 5 games + ui-template
 ```
 
 ### Branch note
@@ -341,12 +385,12 @@ Game builds are fetched from `https://raw.githubusercontent.com/fervidos/Polaris
 
 ---
 
-> *All tools are game-automation scripts for simulated in-game economies. Use at your own risk — if a game updates, its build is repacked and the hub serves the fresh version on next launch.*
-
 <div align="center">
+
+> *These are automation scripts. Use them at your own risk. If a game updates, its build gets repacked and the hub serves the fresh version on your next launch.*
 
 ### ✦ PRECISION IN EVERY DETAIL ✦
 
-*POLARIS — v1.1.0 · fಬೇಕridos / PolarisHub*
+*POLARIS · v1.1.0 · fervidos / PolarisHub*
 
 </div>
