@@ -1,0 +1,29 @@
+# POLARIS — private sources are never published.
+# Only the packed builds under build/ go to GitHub (hub included: build/polaris.lua).
+
+# --- Plain game / asset sources (private) ---
+# Obfuscator/ holds the private build tooling; it is never published, so
+# its packing method cannot be copied from the repo.
+Games/
+Assets/
+Obfuscator/
+/polaris.lua
+
+# Portable backups of the sources, if any
+*.bak
+*.orig
+*.local.lua
+*_source.lua
+*_src.lua
+
+# --- Build output is PACKED source; keep it published ---
+# (nothing to ignore here — build/*.lua is the public artifact)
+
+# --- Misc ---
+*.py[cod]
+__pycache__/
+.DS_Store
+.vscode/
+.idea/
+temp/
+tmp/
