@@ -61,7 +61,7 @@ The hub (`polaris.lua`) holds **no game logic at all**. When you press **Launch*
 | :-: | --- | --- | --- |
 | 01 | **Roblox Stock Exchange 2** | `110527353762049` | Quantum Trader v2.0.0 |
 | 02 | **Sell a Million Sushi** | `125866884667103` | Empire Commander |
-| 03 | **Steal a Forest** | `140149493280576` | Anti-AFK v2.2.0 |
+| 03 | **Steal a Forest** | `140149493280576` | Anti-AFK v2.3.0 |
 | 04 | **Cold War** | `13687899540` | Combat Suite |
 | 05 | **Scam With Your Friends** | `133878278486520` | KolkataFarmer v8 |
 
@@ -188,11 +188,11 @@ Live stats for **Status**, **Net Worth**, **Current Count** and **Fish Price** (
 </details>
 
 <details>
-<summary><b>03 · Steal a Forest — Anti-AFK v2.2.0</b></summary>
+<summary><b>03 · Steal a Forest — Anti-AFK v2.3.0</b></summary>
 
 <br>
 
-> *A human-like, multi-vector anti-AFK that never pulls you out of your base zone.*
+> *A human-like, multi-vector anti-AFK that never pulls you out of your base zone — plus one-click server hopping to the emptiest, lowest-ping server.*
 > PlaceId `140149493280576` · Show / hide `RightShift`
 
 #### The engine
@@ -210,6 +210,24 @@ Each of these fires as its own independent pulse, and all of them are `pcall`-sa
 
 Pulses are anchored to your idle spot (spawn, base or guards zone). If you drift more than `10` studs away, it gently walks you back, and **Reset Anchor** lets you set a new anchor anywhere. Before every move it checks you're actually on the ground using `FloorMaterial`.
 
+#### Change server (lowest players + lowest ping)
+
+The **SERVER** row shows where you are (`This: 5 players | 48ms`) and the best candidate found. Press **CHANGE SERVER** and it:
+
+1. Fetches the public server list from `games.roblox.com` (ascending player count, two pages of `100`).
+2. Keeps only servers with **fewer players than the one you're in**.
+3. Takes the **emptiest** of those and picks the **lowest ping** among them.
+4. Teleports with `TeleportService:TeleportToPlaceInstance`, and if that server rejects the teleport (`TeleportInitFailed`: full, reserved, shut down) it automatically tries the next-best one.
+5. Queues an auto-reload with `queue_on_teleport`, so this build re-runs and the GUI comes back by itself after the hop.
+
+| Control | What it does |
+| --- | --- |
+| **Left click** `CHANGE SERVER` | Scan, then teleport to the best server |
+| **Right click** `CHANGE SERVER` | Scan only — shows the top 3 candidates in the log, no teleport |
+| **MAX `-` / `+`** | Caps how busy a target may be (`1`–`20`, default `5`) |
+
+The scan is cached for `15s` so repeated clicks don't hammer the API, and the chosen server is always less populated than the current one — if you're already in the emptiest server it says so instead of hopping you somewhere busier.
+
 #### Modes & cadence
 
 | Mode | Feel |
@@ -222,7 +240,7 @@ The interval slider runs from `15s` to `120s` (default `45s`) with `0.85x`–`1.
 
 #### GUI
 
-A dark-glass, draggable window with animated show / hide, a **live countdown**, a **pulse log**, per-method chips (`Keys · Jump · Camera · Spin · VU · Move`), a mini-pill when hidden, and saved settings (`Polaris_StealForest_AntiAFK.json`).
+A dark-glass, draggable window with animated show / hide, a **live countdown**, a **pulse log**, per-method chips (`Keys · Jump · Camera · Spin · VU · Move`), the **server-hop row**, a mini-pill when hidden, and saved settings (`Polaris_StealForest_AntiAFK.json`).
 
 The game has no custom AFK RemoteEvent (all 142 remotes were scanned), so what this beats is the real 20-minute idle detector.
 
@@ -330,6 +348,7 @@ CONTROL, AUTOMATION and TUNING sections with toggles for `SHOP · TEAM · STYLE 
 | **RSE2** | `RightShift` · `Delete` | Menu · **Panic close everything** |
 | **Sushi** | `RightShift` · `F8` | Toggle GUI · Toggle Auto-Pilot |
 | **Steal a Forest** | `RightShift` | Show / hide the Anti-AFK GUI |
+| **Steal a Forest** | `CHANGE SERVER` button | Hop to the emptiest, lowest-ping server (right-click scans only) |
 | **Cold War** | `RightShift` · `F1`–`F4` | Panel · Panic key (changeable) |
 | **KolkataFarmer** | `RightShift` | Hide / show GUI |
 | **Any intro** | Click / tap | Skip the cinematic startup |
@@ -355,6 +374,8 @@ Every packed build opens with it (source: `Assets/startup_animation.lua`):
 | **Wrong game** | Join the exact PlaceId from the table first. The hub will offer **Join Game** rather than run the wrong build. |
 | **Hub missing or doubled** | Re-run the loader. The hub destroys any previous instance (`POLARIS_HUB.Destroy`) on boot. |
 | **A game GUI won't open** | Check the key in [Controls at a glance](#-controls-at-a-glance). Most are `RightShift`. |
+| **"Server scan failed: HTTP 429"** | Roblox rate-limited the public servers API. Wait a few seconds and press **CHANGE SERVER** again (right-click forces a fresh scan). |
+| **"no candidates (already lowest?)"** | Every other public server has as many or more players than yours. Raise the **MAX** value if you want to allow busier targets. |
 
 ---
 
